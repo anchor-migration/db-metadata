@@ -2,6 +2,8 @@
 
 Part of **[Anchor Migration](https://github.com/anchor-migration/migration-hub)** — schema metadata export for legacy modernization.
 
+> Program map: [START-HERE.md](https://github.com/anchor-migration/migration-hub/blob/main/docs/START-HERE.md) · AI bootstrap: [AGENTS.md](https://github.com/anchor-migration/migration-hub/blob/main/AGENTS.md)
+
 Export database metadata (tables, columns, keys, indexes) from live databases into a local SQLite file. The source database is treated as the **single source of truth (SSoT)**. Downstream tools—such as Java migration (EJB → Spring) and data lineage analysis—read from SQLite instead of connecting to production.
 
 **Supported source databases:** Oracle, MySQL, PostgreSQL, SQL Server
