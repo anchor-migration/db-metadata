@@ -1,4 +1,6 @@
-# db-migration
+# db-metadata
+
+Part of **[Anchor Migration](https://github.com/anchor-migration/migration-hub)** — schema metadata export for legacy modernization.
 
 Export database metadata (tables, columns, keys, indexes) from live databases into a local SQLite file. The source database is treated as the **single source of truth (SSoT)**. Downstream tools—such as Java migration (EJB → Spring) and data lineage analysis—read from SQLite instead of connecting to production.
 
@@ -21,8 +23,8 @@ Export database metadata (tables, columns, keys, indexes) from live databases in
 ## Installation
 
 ```bash
-git clone https://github.com/jiananwang/db_migration.git
-cd db_migration
+git clone https://github.com/anchor-migration/db-metadata.git
+cd db-metadata
 pip install -e ".[all]"
 ```
 

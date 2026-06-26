@@ -9,7 +9,7 @@ description = "Export database metadata from live databases to local SQLite as S
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
-authors = [{ name = "db-migration contributors" }]
+authors = [{ name = "Anchor Migration contributors" }]
 keywords = [
     "database",
     "metadata",
@@ -65,9 +65,10 @@ packages = ["src/db_migration"]
 include = ["src/db_migration", "README.md", "LICENSE"]
 
 [project.urls]
-Homepage = "https://github.com/jiananwang/db_migration"
-Repository = "https://github.com/jiananwang/db_migration"
-Issues = "https://github.com/jiananwang/db_migration/issues"
+Homepage = "https://github.com/anchor-migration/db-metadata"
+Repository = "https://github.com/anchor-migration/db-metadata"
+Issues = "https://github.com/anchor-migration/db-metadata/issues"
+Documentation = "https://github.com/anchor-migration/migration-hub"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
