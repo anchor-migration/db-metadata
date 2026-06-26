@@ -70,13 +70,16 @@ class DialectAdapter(ABC):
         if schema_filter is not None:
             return schema_filter
 
-        if self.inspector.has_schema():
-            schemas = self.inspector.get_schema_names()
-        else:
+        try:
+            schemas = list(self.inspector.get_schema_names())
+        except NotImplementedError:
+            schemas = []
+
+        if not schemas:
             schemas = [self.default_schema()]
 
         excluded = SYSTEM_SCHEMAS.get(self.dialect_name, frozenset())
-        return [s for s in schemas if s not in excluded and not self._is_system_schema(s)]
+        return [s for s in schemas if s and s not in excluded and not self._is_system_schema(s)]
 
     @abstractmethod
     def default_schema(self) -> str:
@@ -233,7 +236,10 @@ class GenericAdapter(DialectAdapter):
     dialect_name = "generic"
 
     def default_schema(self) -> str:
-        return ""
+        if self.engine.dialect.name == "sqlite":
+            return "main"
+        default = self.inspector.default_schema_name
+        return default if default is not None else ""
 
 
 def get_adapter(engine: Engine) -> DialectAdapter:

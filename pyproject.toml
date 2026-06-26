@@ -57,6 +57,10 @@ db-migration = "db_migration.cli:app"
 [tool.hatch.build.targets.wheel]
 packages = ["src/db_migration"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/db_migration/store/schema" = "db_migration/store/schema"
+"src/db_migration/verify/queries" = "db_migration/verify/queries"
+
 [tool.hatch.build.targets.sdist]
 include = ["src/db_migration", "README.md", "LICENSE"]
 

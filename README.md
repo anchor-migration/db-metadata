@@ -117,6 +117,122 @@ WHERE tt.name = 'customers';
 
 More examples: [`examples/queries/`](examples/queries/)
 
+## Testing
+
+### Unit tests
+
+No live database required:
+
+```bash
+pip install -e ".[dev]"
+pytest -v
+```
+
+### End-to-end smoke test (SQLite → SQLite)
+
+Use a local SQLite file as the source database. No extra drivers are needed beyond the base install.
+
+**1. Create a sample source database**
+
+```bash
+mkdir -p metadata
+
+python -c "
+import sqlite3
+conn = sqlite3.connect('metadata/source.db')
+conn.executescript('''
+CREATE TABLE customers (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL
+);
+CREATE TABLE orders (
+  id INTEGER PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id)
+);
+CREATE INDEX idx_orders_customer ON orders(customer_id);
+''')
+conn.commit()
+conn.close()
+print('source.db created')
+"
+```
+
+**2. Export metadata**
+
+```bash
+db-migration export \
+  --url "sqlite:///metadata/source.db" \
+  --out metadata/exported.db
+```
+
+Expected output:
+
+```
+Connecting to database...
+Extracted 1 schema(s), 2 table(s)/view(s)
+Written to metadata/exported.db (export_run_id=1)
+```
+
+**3. Verify the export**
+
+```bash
+db-migration info metadata/exported.db
+```
+
+Expected summary:
+
+```
+Export run:     1
+Source dialect: sqlite
+Schemas:        1
+Tables/views:   2
+Columns:        4
+Foreign keys:   1
+Indexes:        1
+```
+
+**4. (Optional) Inspect exported columns**
+
+```bash
+python -c "
+import sqlite3
+for row in sqlite3.connect('metadata/exported.db').execute(
+    'SELECT stable_id, data_type, is_pk FROM db_column ORDER BY stable_id'
+):
+    print(row)
+"
+```
+
+`metadata/*.db` files are listed in `.gitignore` and are not committed.
+
+### Verify export against source
+
+After exporting, reconcile the SQLite snapshot against the live database:
+
+```bash
+# 1. Export
+db-migration export \
+  --url "sqlite:///metadata/source.db" \
+  --out metadata/exported.db
+
+# 2. Verify (exit 0 = match, 1 = mismatch)
+db-migration verify metadata/exported.db \
+  --url "sqlite:///metadata/source.db"
+```
+
+Verification compares normalized entity sets:
+
+- tables, views, columns
+- primary keys, foreign keys
+- indexes, unique constraints
+
+Dialect-specific ground-truth SQL scripts:
+[`src/db_migration/verify/queries/`](src/db_migration/verify/queries/)
+and [`examples/verify/`](examples/verify/).
+
+SQLite uses a programmatic collector (no portable catalog SQL). PostgreSQL, MySQL,
+Oracle, and SQL Server each have a dedicated `.sql` script.
+
 ## Development
 
 ```bash

@@ -16,9 +16,11 @@ class SQLServerAdapter(DialectAdapter):
     def list_schemas(self, schema_filter: list[str] | None) -> list[str]:
         if schema_filter is not None:
             return schema_filter
-        if self.inspector.has_schema():
-            schemas = self.inspector.get_schema_names()
-        else:
+        try:
+            schemas = list(self.inspector.get_schema_names())
+        except NotImplementedError:
+            schemas = []
+        if not schemas:
             schemas = [self.default_schema()]
         excluded = SYSTEM_SCHEMAS["mssql"]
         return [s for s in schemas if s not in excluded and not s.startswith("db_")]

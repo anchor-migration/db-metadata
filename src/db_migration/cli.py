@@ -90,6 +90,81 @@ def info_cmd(
     typer.echo(f"Indexes:        {info.index_count}")
 
 
+@app.command("verify")
+def verify_cmd(
+    metadata_db: Path = typer.Argument(..., help="Exported SQLite metadata file"),
+    url: Optional[str] = typer.Option(
+        None,
+        "--url",
+        "-u",
+        help="Source database URL (or set DB_MIGRATION_URL)",
+    ),
+    run_id: Optional[int] = typer.Option(
+        None,
+        "--run-id",
+        help="Export run id to verify (default: latest)",
+    ),
+    schemas: Optional[str] = typer.Option(
+        None,
+        "--schemas",
+        "-s",
+        help="Schema filter override (default: use export_run.schema_filter)",
+    ),
+    show_all: bool = typer.Option(
+        False,
+        "--show-all",
+        help="Print every mismatch (default: first 20 per category)",
+    ),
+) -> None:
+    """Reconcile exported metadata against live source database."""
+    from db_migration.verify.runner import run_verify
+
+    db_url = resolve_url(url)
+    schema_filter = parse_schemas(schemas)
+
+    typer.echo("Collecting entities from source database...")
+    report, export_run_id = run_verify(
+        source_url=db_url,
+        metadata_db=metadata_db,
+        export_run_id=run_id,
+        schema_filter=schema_filter,
+    )
+
+    typer.echo(f"Verifying export_run_id={export_run_id}")
+    typer.echo(f"Matched entities: {report.matched}")
+
+    if report.ok:
+        typer.secho("Verification PASSED — export matches source.", fg=typer.colors.GREEN)
+        raise typer.Exit(0)
+
+    typer.secho("Verification FAILED — mismatches found.", fg=typer.colors.RED, err=True)
+    typer.echo(f"Missing in export: {len(report.missing_in_export)}")
+    typer.echo(f"Extra in export:   {len(report.extra_in_export)}")
+
+    for entity_type, counts in sorted(report.summary_by_type().items()):
+        typer.echo(
+            f"  {entity_type}: missing={counts['missing']}, extra={counts['extra']}"
+        )
+
+    limit = None if show_all else 20
+
+    if report.missing_in_export:
+        typer.echo("\nMissing in export (sample):")
+        for entity in report.missing_in_export[:limit]:
+            typer.echo(f"  - [{entity.entity_type}] {entity.entity_key}")
+        if limit and len(report.missing_in_export) > limit:
+            typer.echo(f"  ... and {len(report.missing_in_export) - limit} more")
+
+    if report.extra_in_export:
+        typer.echo("\nExtra in export (sample):")
+        for entity in report.extra_in_export[:limit]:
+            typer.echo(f"  - [{entity.entity_type}] {entity.entity_key}")
+        if limit and len(report.extra_in_export) > limit:
+            typer.echo(f"  ... and {len(report.extra_in_export) - limit} more")
+
+    raise typer.Exit(1)
+
+
 def main() -> None:
     app()
 

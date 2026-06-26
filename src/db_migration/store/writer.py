@@ -103,8 +103,7 @@ class MetadataWriter:
 
     def __init__(self, db_path: str | Path) -> None:
         self.db_path = Path(db_path)
-        if not self.db_path.exists():
-            init_db(self.db_path)
+        init_db(self.db_path)
 
     def write(self, snapshot: DatabaseSnapshot) -> int:
         """Write snapshot as new export_run. Returns export_run id."""
